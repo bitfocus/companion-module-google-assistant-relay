@@ -106,34 +106,28 @@ instance.prototype.actions = function (system) {
 
 instance.prototype.action = function (action) {
 	var self = this
-	var cmd
-
-	cmd = self.config.host
-
 	if (action.action == 'post') {
-		var request = require('request')
-		if (action.action == 'post') {
-			var request = require('request')
-			var options = {
-				method: 'POST',
-				url: self.config.method + '://' + self.config.host + ':' + self.config.port + '/assistant',
-				rejectUnauthorized: false,
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({
-					'user:': self.config.user,
-					command: action.options.command,
-					broadcast: action.options.broadcast,
-				}),
+
+		cmd = self.config.method + '://' + self.config.host + ':' + self.config.port + '/assistant';
+		header = JSON.stringify({
+			'Content-Type': 'application/json',
+		});
+		body = JSON.stringify({
+			'user:': self.config.user,
+			'command': action.options.command,
+			'broadcast': action.options.broadcast,
+		});
+
+		self.system.emit('rest', cmd, body, function (err, result) {
+			if (err !== null) {
+				self.log('error', 'Request failed (' + result.error.code + ')');
+				self.status(self.STATUS_ERROR, result.error.code);
 			}
-			request(options, function (error, response) {
-				if (error) {
-					self.log('error', 'Request failed (' + response.statusCode + ':' + response.statusMessage + ')')
-					self.status(self.STATUS_ERROR, error)
-				}
-			})
-		}
+			else {
+				self.status(self.STATUS_OK);
+			}
+		}, header);
+
 	}
 }
 
